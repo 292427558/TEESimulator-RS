@@ -130,12 +130,30 @@ object AndroidDeviceUtils {
      */
     @OptIn(ExperimentalStdlibApi::class)
     private fun getProperty(name: String, expectedSize: Int): ByteArray? {
+        // Try resetprop first: it spawns a separate process that inherits the shell's
+        // SELinux context, bypassing the keystore2 domain restriction that prevents
+        // SystemProperties.get() from reading ro.boot.* props on many devices.
+        getPropertyViaResetprop(name, expectedSize)?.let { return it }
+        // Fall back to SystemProperties for properties readable in-process.
         val value = SystemProperties.get(name, null)
         if (value.isNullOrBlank()) {
             return null
         }
         // A valid digest is (2 * size) hex characters.
         return if (value.length == expectedSize * 2) value.hexToByteArray() else null
+    }
+
+    private fun getPropertyViaResetprop(name: String, expectedSize: Int): ByteArray? {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("resetprop", name))
+            val result = process.inputStream.bufferedReader().readText().trim()
+            val exitCode = process.waitFor()
+            if (exitCode != 0 || result.isBlank()) null
+            else if (result.length == expectedSize * 2) result.hexToByteArray()
+            else null
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /**
