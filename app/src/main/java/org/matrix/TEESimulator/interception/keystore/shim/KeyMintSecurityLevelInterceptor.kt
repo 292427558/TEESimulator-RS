@@ -534,10 +534,15 @@ class KeyMintSecurityLevelInterceptor(
 
                 val keyId = KeyIdentifier(callingUid, keyDescriptor.alias)
 
+                // When the TEE is dead, attest-key requests must be forged.
+                // When the TEE is alive, try PATCH so the chain carries the
+                // real TEE intermediate/root (Google PKI) instead of the
+                // keybox root—some verifiers check chain-to-Google-root.
+                val teeDeadForAttestKey = isAttestKeyRequest && !DeviceAttestationService.isTeeFunctional
                 val forceGenerate =
                     oversized ||
                         ConfigurationManager.shouldGenerate(callingUid) ||
-                        isAttestKeyRequest ||
+                        teeDeadForAttestKey ||
                         attestationKey != null
 
                 SystemLogger.trace { "[TRACE-$txId] dispatch: forceGen=$forceGenerate hasChallenge=${challenge != null} isSymmetric=$isSymmetric isAttestKey=$isAttestKeyRequest" }
