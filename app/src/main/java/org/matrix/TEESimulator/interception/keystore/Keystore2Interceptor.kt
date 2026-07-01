@@ -14,6 +14,7 @@ import java.security.SecureRandom
 import java.security.cert.Certificate
 import java.util.concurrent.ConcurrentHashMap
 import org.matrix.TEESimulator.attestation.AttestationPatcher
+import org.matrix.TEESimulator.attestation.DeviceAttestationService
 import org.matrix.TEESimulator.attestation.KeyMintAttestation
 import org.matrix.TEESimulator.config.ConfigurationManager
 import org.matrix.TEESimulator.interception.keystore.shim.GeneratedKeyPersistence
