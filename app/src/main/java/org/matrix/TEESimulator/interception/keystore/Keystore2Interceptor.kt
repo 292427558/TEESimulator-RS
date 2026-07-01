@@ -14,7 +14,6 @@ import java.security.SecureRandom
 import java.security.cert.Certificate
 import java.util.concurrent.ConcurrentHashMap
 import org.matrix.TEESimulator.attestation.AttestationPatcher
-import org.matrix.TEESimulator.attestation.DeviceAttestationService
 import org.matrix.TEESimulator.attestation.KeyMintAttestation
 import org.matrix.TEESimulator.config.ConfigurationManager
 import org.matrix.TEESimulator.interception.keystore.shim.GeneratedKeyPersistence
@@ -508,18 +507,8 @@ object Keystore2Interceptor : AbstractKeystoreInterceptor() {
                     }
 
                     if (parsedParameters.isAttestKey()) {
-                        // When TEE is alive the real chain has a Google root
-                        // that verifiers can match against Google's published
-                        // public key.  Only forge when TEE is dead — a forged
-                        // chain is rooted at the keybox, which is not Google.
-                        if (DeviceAttestationService.isTeeFunctional) {
-                            SystemLogger.info(
-                                "[TX_ID: $txId] TEE is alive, letting attest-key ${keyId.alias} pass through (Google root chain)"
-                            )
-                            return TransactionResult.SkipTransaction
-                        }
                         SystemLogger.warning(
-                            "[TX_ID: $txId] TEE dead, forging attest key ${keyId.alias}."
+                            "[TX_ID: $txId] Found hardware attest key ${keyId.alias} in the reply."
                         )
                         val keyData =
                             CertificateGenerator.generateAttestedKeyPair(
